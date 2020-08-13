@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="author" content="Monish Reddy Kotturu">
+    <title>RRT test</title>
+  </head>
+
+  <style>
+    html, body {
+      margin: 0;
+    }
+
+    body {
+      background: black;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #buttons {
+      font-size: 18px;
+      font-family: monospace;
+      padding: 50px 0 15px 0;
+    }
+
+    #buttons a {
+      color: white;
+      text-decoration: none;
+      padding: 5px;
+      border: solid 1px white;
+      border-radius: 5px;
+      transition: 0.2s;
+    }
+
+    #buttons a:visited {
+      border-radius: 5px;
+    }
+
+    #buttons a:hover {
+      border-radius: 10px;
+    }
+
+    #nodeCount {
+      color: white;
+      font-size: 18px;
+      font-family: monospace;
+      padding: 15px 0;
+    }
+
+    canvas {
+      border: 5px solid yellow;
+      background-color: darkgray;
+    }
+
+    footer {
+      color: white;
+      font-family: monospace;
+      padding: 50px 0;
+    }
+  </style>
+
+  <body>
+    <div id="buttons">
+      <a href="rrttest.html">RRT</a>
+      <a href="notes.html">Notes</a>
+    </div>
+
+    <p id="nodeCount">Nodes: </p>
+
+    <canvas width="1200" height="600" id="myCanvas"></canvas>
+
+    <footer>By Monish Reddy Kotturu</footer>
+
+    <script>
+      var canvas = document.getElementById('myCanvas');
+      var ctx = canvas.getContext('2d');
+
+      var deltaDist = 10;
+      var nodes = 3000;
+      var points = [];
+      var path = [];
+
+      var dotSize = 10;
+
+      // hex codes only
+      var startColor = '#0000ff';
+      var goalColor = '#00ff00';
+      var obstacleColor = '#A52A2A';
+
+      createObstacle({x: 100, y: 200}, {x: 300, y: 100});
+      createObstacle({x: 400, y: 400}, {x: 800, y: 550});
+      createObstacle({x: 900, y: 100}, {x: 910, y: 500});
+
+      ctx.fillStyle = startColor;
+
+      var start;
+      do {
+        start = getRandomPoint();
+      } while (hitsObstacle(start, start));
+
+      points.push({thisNode: start, nearestNodeID: 0});
+      plotPoint(points[0].thisNode, dotSize);
+
+      ctx.fillStyle = goalColor;
+
+      var goal;
+      do {
+        goal = getRandomPoint();
+      } while (hitsObstacle(goal, goal));
+
+      plotPoint(goal, dotSize);
+
+      var i = 1;
+      var y = 1;
+      dotSize = 3;
+
+      var count = 0;
+      var isFound = false;
+      var returning = false;
+      var done = false;
+      var c, p;
+
+      function loop() {
+        if (!done) requestAnimationFrame(loop);
+
+        // fps - increase the constant to slow down the animation
+        /*if (++count < 100) return;
+        count = 0;*/
+
+        if (!isFound) {
+          let node;
+          do {
+            node = getNextNode();
+          } while (hitsObstacle(node.pt, node.nearestNode));
+
+          points.push({thisNode: node.pt, nearestNodeID: node.nearestNodeID});
+          drawLine(node.nearestNode, node.pt);
+          document.getElementById("nodeCount").innerHTML = "Nodes: " + points.length;
+        } else if (!returning) {
+          ctx.strokeStyle = 'red';
+          ctx.lineWidth = 2;
+          c = points[points.length - 1].thisNode;
+          p = points[points.length - 1].nearestNodeID;
+          while (c != points[0].thisNode) {
+            path.unshift(c);
+            c = points[p].thisNode;
+            p = points[p].nearestNodeID;
+          }
+          path.unshift(points[0].thisNode);
+          returning = true;
+        }
+
+        if (returning && y < path.length) {
+          drawLine(path[y - 1], path[y]);
+          y++;
+        } else if (y === path.length) done = true;
+      }
+
+      if (!done) requestAnimationFrame(loop);
+      // console.log(points);
+      // console.log(path);
+
+      // returns a random point on the canvas
+      function getRandomPoint() {
+        return {x: (Math.floor(Math.random() * canvas.width)), y: (Math.floor(Math.random() * canvas.height))};
+      }
+
+      // returns the distance between two points
+      function getDistance(pti, ptf) {
+        return Math.sqrt(((ptf.x - pti.x) * (ptf.x - pti.x)) + ((ptf.y - pti.y) * (ptf.y - pti.y)));
+      }
+
+      // creates a rectangular obstacle given the topleft and bottomright coordinates
+      function createObstacle(topLeft, bottomRight) {
+        ctx.fillStyle = obstacleColor;
+        ctx.fillRect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+      }
+
+      // draws a circle at a given point
+      function plotPoint(pt, r) {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, r, 0, 2*Math.PI);
+        ctx.fill();
+      }
+
+      // gets the next random point
+      function getNextNode() {
+        let pt = getRandomPoint();
+
+        // find the node nearest to the random point 'pt'
+        let smallestDist = getDistance(points[0].thisNode, pt);
+        let nearestNode = points[0].thisNode;
+        let nearestNodeID = 0;
+
+        for (let j = 1; j < points.length; j++) {
+          if (getDistance(points[j].thisNode, pt) <= smallestDist) {
+            smallestDist = getDistance(points[j].thisNode, pt);
+            nearestNode = points[j].thisNode;
+            nearestNodeID = j;
+          }
+        }
+
+        // shifting the random point
+        if (smallestDist > deltaDist) {
+          pt.x = nearestNode.x + (pt.x - nearestNode.x)/(smallestDist/deltaDist);
+          pt.y = nearestNode.y + (pt.y - nearestNode.y)/(smallestDist/deltaDist);
+        }
+
+        if (checkColor(pt, 1, 1, goalColor)) isFound = true;;
+
+        return {pt: pt, nearestNode: nearestNode, nearestNodeID: nearestNodeID};
+      }
+
+      // checks if the path to the node is obstructed
+      function hitsObstacle(randNode, nearestNode) {
+        let checkPoint = {};
+
+        if (randNode.x < nearestNode.x) checkPoint.x = randNode.x;
+        else checkPoint.x = nearestNode.x;
+
+        if (randNode.y < nearestNode.y) checkPoint.y = randNode.y;
+        else checkPoint.y = nearestNode.y;
+
+        return checkColor(checkPoint, Math.abs(randNode.x - nearestNode.x) + 1, Math.abs(randNode.y - nearestNode.y) + 1, obstacleColor);
+      }
+
+      // checks if the colorToCheck (hex code only) is contained within the area created by topLeft and bottomRight
+      function checkColor(topLeft, width, height, colorToCheck) {
+        let imgData = ctx.getImageData(topLeft.x, topLeft.y, width, height);
+        for (let i = 0; i < imgData.data.length; i += 4) {
+          if (colorToCheck.toLowerCase() === ('#' + componentToHex(imgData.data[i + 0]) + componentToHex(imgData.data[i + 1]) + componentToHex(imgData.data[i + 2]))) return true;
+        }
+        return false;
+      }
+
+      // convert r, g, or b to hex
+      function componentToHex(c) {
+        var hex = c.toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
+      }
+
+      // draw line
+      function drawLine(from, to) {
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+      }
+    </script>
+  </body>
+</html>

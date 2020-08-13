@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="author" content="Monish Reddy Kotturu">
+    <title>RRT notes</title>
+  </head>
+
+  <style>
+    html, body {
+      margin: 0;
+    }
+
+    body {
+      background: black;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #buttons {
+      font-size: 18px;
+      font-family: monospace;
+      padding: 50px 0;
+    }
+
+    #buttons a {
+      color: white;
+      text-decoration: none;
+      padding: 5px;
+      border: solid 1px white;
+      border-radius: 5px;
+      transition: 0.2s;
+    }
+
+    #buttons a:visited {
+      border-radius: 5px;
+    }
+
+    #buttons a:hover {
+      border-radius: 10px;
+    }
+
+    #notes {
+      border: solid 1px white;
+      border-radius: 5px;
+      margin: 0 20px;
+      padding: 20px;
+      color: white;
+      font-family: monospace;
+      font-size: 18px;
+    }
+
+    footer {
+      color: white;
+      font-family: monospace;
+      padding: 50px 0;
+    }
+  </style>
+
+  <body>
+    <div id="buttons">
+      <a href="rrttest.html">RRT</a>
+      <a href="notes.html">Notes</a>
+    </div>
+
+    <div id="notes">
+      <p>Rapidly-exploring Random Trees (RRT) is an algorithm designed to efficiently search spaces by randomly building a space-filling tree.  The tree is constructed incrementally from samples drawn randomly from the search space and is inherently biased to grow towards large unsearched areas of the problem. RRTs were developed by Steven M. LaValle and James J. Kuffner Jr. They easily handle problems with obstacles and differential constraints (nonholonomic and kinodynamic) and have been widely used in autonomous robotic motion planning.</p>
+
+      <p>An RRT grows a tree rooted at the starting configuration by using random samples from the search space. As each sample is drawn, a connection is attempted between it and the nearest state in the tree. If the connection is feasible (passes entirely through free space and obeys any constraints), this results in the addition of the new state to the tree.</p>
+
+      <p>The length of the connection between the tree and a new state is frequently limited by a growth factor. If the random sample is further from its nearest state in the tree than this limit allows, a new state at the maximum distance from the tree along the line to the random sample is used instead of the random sample itself. The random samples can then be viewed as controlling the direction of the tree growth while the growth factor determines its rate. This maintains the space-filling bias of the RRT while limiting the size of the incremental growth.</p>
+    </div>
+
+    <footer>By Monish Reddy Kotturu</footer>
+  </body>
+</html>
